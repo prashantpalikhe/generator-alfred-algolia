@@ -43,27 +43,58 @@ module.exports = class extends Generator {
 				message: 'What is the Alfred category?',
 				type: 'list',
 				default: 'Uncategorised',
-				choices: [
-					'Tools',
-					'Internet',
-					'Productivity',
-					'Uncategorised'
-				]
+				choices: ['Tools', 'Internet', 'Productivity', 'Uncategorised']
 			},
 			{
 				name: 'githubUsername',
 				message: 'What is your GitHub username?',
 				store: true,
-				validate: x => x.length > 0 ? true : 'You have to provide a username'
+				validate: x =>
+					x.length > 0 ? true : 'You have to provide a username'
 			},
 			{
 				name: 'website',
 				message: 'What is the URL of your website?',
 				store: true,
-				validate: x => x.length > 0 ? true : 'You have to provide a website URL',
+				validate: x =>
+					x.length > 0 ? true : 'You have to provide a website URL',
 				filter: x => normalizeUrl(x)
+			},
+			{
+				name: 'algoliaApplicationId',
+				message: 'What is the Algolia application ID?',
+				store: true,
+				validate: x =>
+					x.length > 0
+						? true
+						: 'You have to provide the Algolia application ID'
+			},
+			{
+				name: 'algoliaApiKey',
+				message: 'What is the Algolia API key?',
+				store: true,
+				validate: x =>
+					x.length > 0
+						? true
+						: 'You have to provide the Algolia API key'
+			},
+			{
+				name: 'algoliaIndex',
+				message: 'What is the Algolia index?',
+				store: true,
+				validate: x =>
+					x.length > 0
+						? true
+						: 'You have to provide the Algolia index'
+			},
+			{
+				name: 'iconUrl',
+				message: 'What is the URL to the icon?',
+				store: true,
+				validate: x =>
+					x.length > 0 ? true : 'You have to provide the icon URL'
 			}
-		]).then(props => {
+		]).then(async props => {
 			props.alfredName = props.moduleName.replace(/^alfred-/, '');
 
 			const tpl = {
@@ -80,16 +111,27 @@ module.exports = class extends Generator {
 				email: this.user.git.email(),
 				website: props.website,
 				humanizedWebsite: humanizeUrl(props.website),
-				uuid: utils.generateUuid
+				uuid: utils.generateUuid,
+				algoliaApiKey: props.algoliaApiKey,
+				algoliaApplicationId: props.algoliaApplicationId,
+				algoliaIndex: props.algoliaIndex,
+				iconUrl: props.iconUrl
 			};
 
 			const mv = (from, to) => {
-				this.fs.move(this.destinationPath(from), this.destinationPath(to));
+				this.fs.move(
+					this.destinationPath(from),
+					this.destinationPath(to)
+				);
 			};
 
-			this.fs.copyTpl([
-				`${this.templatePath()}/**`
-			], this.destinationPath(), tpl);
+			this.fs.copyTpl(
+				[`${this.templatePath()}/**`],
+				this.destinationPath(),
+				tpl
+			);
+
+			await utils.download(props.iconUrl, 'icon.png');
 
 			mv('editorconfig', '.editorconfig');
 			mv('gitattributes', '.gitattributes');
@@ -104,6 +146,6 @@ module.exports = class extends Generator {
 	}
 
 	install() {
-		this.npmInstall(null, {ignoreScripts: true});
+		this.npmInstall(null, { ignoreScripts: true });
 	}
 };

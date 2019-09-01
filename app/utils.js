@@ -3,6 +3,8 @@ const url = require('url');
 const uuid = require('uuid');
 const _s = require('underscore.string');
 const isScoped = require('is-scoped');
+const fs = require('fs');
+const request = require('request');
 
 const uuids = new Map();
 
@@ -32,6 +34,14 @@ exports.bundleId = props => {
 	return `${parts[1]}.${parts[0]}.${props.alfredName}`;
 };
 
-exports.repoName = name => isScoped(name) ? name.split('/')[1] : name;
+exports.download = (uri, filename) => {
+	return new Promise(resolve => {
+		request(uri)
+			.pipe(fs.createWriteStream(filename))
+			.on('close', resolve);
+	});
+};
 
-exports.slugifyPackageName = name => isScoped(name) ? name : _s.slugify(name);
+exports.repoName = name => (isScoped(name) ? name.split('/')[1] : name);
+
+exports.slugifyPackageName = name => (isScoped(name) ? name : _s.slugify(name));
